@@ -3,8 +3,11 @@ import express from "express";
 import cors from "cors";
 import conn from "./config/conn.js";
 
+//importação dos models
+import Tarefa from "./models/tarefaModel.js";
+
 //importação das rotas
-import tarefaRouter from "./routes/tarefaRouter.js";
+import tarefaRouter from "./routes/tarefaRouter.js"
 
 const PORT = process.env.PORT || 9090;
 
