@@ -67,3 +67,40 @@ export const getTarefa = async (req, res) => {
     res.status(500).json({ msg: "Erro ao buscar tarefa" });
   }
 };
+
+export const updateTarefa = async (req, res) => {
+    const { id } = req.params
+    const { tarefa, descricao, status } = req.body
+
+    //Validações
+    if(!tarefa){
+        res.status(400).json({msg: "A tarefa é obrigatória"})
+        return
+    }
+    if(!descricao){
+        res.status(400).json({msg: "A descrição é obrigatória"})
+        return
+    }
+    if(!status){
+        res.status(400).json({msg: "O status é obrigatória"})
+        return
+    }
+
+    const tarefaAtualizada = {
+        tarefa, 
+        descricao, 
+        status
+    }
+
+    try {
+        await Tarefa.update(tarefaAtualizada, { where: { id } })
+        if(linhasAfetadas <= 0){
+            res.status(404).json({msg: "Tarefa não encontrada"})
+            return
+        }
+        res.status(200).json({mes: "Tarefa atualizada"})
+    } catch (error) {
+        res.status(500).json({msg: "Erro ao atualizar tarefa"})
+    }
+
+};
