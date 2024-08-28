@@ -2,26 +2,28 @@ import Tarefa from "../models/tarefaModel.js";
 
 //tarefas?page=2&limit=10
 export const getAll = async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit)  || 10;
-    const offset = (page - 1) * limit
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = (page - 1) * limit;
 
   try {
     const tarefas = await Tarefa.findAndCountAll({
       limit,
-      offset
+      offset,
     });
 
-    const totalPaginas = Math.ceil (tarefas.count / limit);
+    const totalPaginas = Math.ceil(tarefas.count / limit);
     res.status(200).json({
-        totalTarefas: tarefas.count,
-        totalPaginas,
-        paginaAtual: page,
-        itensPorPagina: limit,
-        proximaPagina: totalPaginas === 0 ? null : `http://localhost:3333/tarefas?page=${page + 1}`,
-        tarefas: tarefas.rows
-    }); 
-
+      totalTarefas: tarefas.count,
+      totalPaginas,
+      paginaAtual: page,
+      itensPorPagina: limit,
+      proximaPagina:
+        totalPaginas === 0
+          ? null
+          : `http://localhost:3333/tarefas?page=${page + 1}`,
+      tarefas: tarefas.rows,
+    });
   } catch (error) {
     res.status(500).json({ msg: "Erro ao listar tarefas" });
   }
@@ -51,5 +53,17 @@ export const create = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ meg: "Erro ao cadastrar tarefa" });
+  }
+};
+
+export const getTarefa = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // const tarefa = await Tarefa.findByPk(id);
+    const tarefa = await Tarefa.findOne({ where: {id} })
+    res.status(200).json(tarefa);
+  } catch (error) {
+    res.status(500).json({ msg: "Erro ao buscar tarefa" });
   }
 };
