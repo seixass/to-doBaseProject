@@ -1,4 +1,22 @@
 import Tarefa from "../models/tarefaModel.js";
+import { z } from "zod";
+import formatZodError from "../helpers/zodError.js";
+
+//Validações com ZOD
+const createSchema = z.object({
+  tarefa: z.string().min(3, {msg: "A tarefa deve ter pelo menos 3 caracteres"}).transform((txt) =>txt.toLowerCase()),
+  descricao: z.string().min(10, {msg: "A descricao deve ter pelo menos 10 caracteres"}),
+})
+
+const idSchema = z.object({
+  id: z.string().uuid("ID inválido. Deve ser um UUID válido."),
+});
+
+const updateSchema = z.object({
+  tarefa: z.string().min(1, "A tarefa é obrigatória"),
+  descricao: z.string().min(1, "A descrição é obrigatória"),
+  status: z.enum(["pendente", "concluída"], "O status é obrigatório e deve ser 'pendente' ou 'concluída'"),
+});
 
 //tarefas?page=2&limit=10
 export const getAll = async (req, res) => {
@@ -30,17 +48,19 @@ export const getAll = async (req, res) => {
 };
 
 export const create = async (req, res) => {
+
+  //implementando a validação com zod
+  const bodyValidation = createSchema.safeParse(req.body);
+  if (!bodyValidation.success) {
+    return res.status(400).json({ 
+      msg: "Os dados recebidos do corpo da requisição são inválidos", 
+      detalhes: formatZodError(bodyValidation.error) 
+    });
+  }
+
   const { tarefa, descricao } = req.body;
   const status = "pendente";
 
-  if (!tarefa) {
-    res.status(400).json({ err: "A tarefa é obrigatório" });
-    return;
-  }
-  if (!descricao) {
-    res.status(400).json({ err: "A tarefa é obrigatório" });
-    return;
-  }
 
   const novaTarefa = {
     tarefa,
@@ -57,11 +77,23 @@ export const create = async (req, res) => {
 };
 
 export const getTarefa = async (req, res) => {
+
+  // Validação do ID com Zod
+  const paramValidation = idSchema.safeParse(req.params);
+  if (!paramValidation.success) {
+    return res.status(400).json({ 
+      msg: "ID da tarefa inválido", 
+      detalhes: formatZodError(paramValidation.error) 
+    });
+  }
+
   const { id } = req.params;
 
   try {
-    // const tarefa = await Tarefa.findByPk(id);
-    const tarefa = await Tarefa.findOne({ where: {id} })
+    const tarefa = await Tarefa.findOne({ where: { id } });
+    if (!tarefa) {
+      return res.status(404).json({ msg: "Tarefa não encontrada" });
+    }
     res.status(200).json(tarefa);
   } catch (error) {
     res.status(500).json({ msg: "Erro ao buscar tarefa" });
@@ -69,6 +101,23 @@ export const getTarefa = async (req, res) => {
 };
 
 export const updateTarefa = async (req, res) => {
+
+  const paramValidation = idSchema.safeParse(req.params);
+  if (!paramValidation.success) {
+    return res.status(400).json({ 
+      msg: "ID da tarefa inválido", 
+      detalhes: formatZodError(paramValidation.error) 
+    });
+  }
+
+  const bodyValidation = updateSchema.safeParse(req.body);
+  if (!bodyValidation.success) {
+    return res.status(400).json({ 
+      msg: "Os dados recebidos do corpo da requisição são inválidos", 
+      detalhes: formatZodError(bodyValidation.error) 
+    });
+  }
+
   const { id } = req.params;
   const { tarefa, descricao, status } = req.body;
 
